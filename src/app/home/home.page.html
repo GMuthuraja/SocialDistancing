@@ -1,46 +1,17 @@
-<!-- <ion-content>
-  <ion-list padding>
-    <ion-button expand="block" (click)="startScanning()">scan</ion-button>
-    <ion-list-header>
-      Paired Devices
-    </ion-list-header>
-    <ion-item *ngFor="let device of pairedDevices">
-      <span (click)="selectDevice(device.id)">
-        {{device.name}}
-      </span>
-    </ion-item>
-    <ion-button expand="block" (click)="disconnect()">Disconnect</ion-button>
-    <ion-list-header>
-      availlable Devices
-    </ion-list-header>
-    <ion-item *ngFor='let device of unpairedDevices'>
-      <span (click)="selectDevice(device.id)">
-        {{device.name || device.address}}
-      </span>
-    </ion-item>
-    <ion-spinner name="crescent" *ngIf="gettingDevices"></ion-spinner>
-  </ion-list>
-</ion-content> -->
 <ion-header>
   <ion-toolbar>
     <ion-title>
       BLE Scanner
     </ion-title>
-    <ion-button (click)="Scan()" slot="end">
-      <ion-icon name="Bluetooth"></ion-icon>
-      <p>Scan</p>
-    </ion-button>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
+  <h2 class="ion-text-center">{{message}}</h2>
   <ion-list>
-    <ion-card-content ion-item>
-    <!-- <ion-card-content ion-item *ngFor="let device of devices"> -->
-      <!-- <p>{{device.name || 'Unnamed'}}</p>
+    <ion-card-content *ngFor="let device of devices">
+      <p>{{device.name || 'Unnamed'}}</p>
       <p>{{device.id}}</p>
-      <p> RSSI: {{device.rssi}}</p> -->
-      <p>{{warning}}</p>
     </ion-card-content>
   </ion-list>
 </ion-content>
