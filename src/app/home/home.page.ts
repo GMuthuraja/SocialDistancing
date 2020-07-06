@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { BluetoothLE } from '@ionic-native/bluetooth-le/ngx';
 import { BLE } from '@ionic-native/ble/ngx';
+import { LocationAccuracy } from '@ionic-native/location-accuracy/ngx';
 
 declare global {
   interface Window {
@@ -18,14 +19,15 @@ declare global {
 export class HomePage {
 
   message: any;
-  serviceId = 'ESTAFF';
+  serviceId = 'FEAA';
   devices = [];
   spinner: boolean = true;
 
 
   constructor(
     private ble: BLE,
-    private bluetoothle: BluetoothLE) {
+    private bluetoothle: BluetoothLE,
+    private locationAccuracy: LocationAccuracy) {
 
     setTimeout(() => {
       this.ble.startStateNotifications().subscribe(r => {
@@ -34,16 +36,18 @@ export class HomePage {
         this.onError(e);
       });
     }, 1000);
-
   }
 
   onInitializeBluetooth(s: any) {
-    console.log(s);
+    console.log("Bluetooth Status: " + s);
     if (s === 'off') {
       this.devices = [];
       if (window.device.platform === 'Android') {
         this.ble.enable().then(r => {
           this.onResponse(r);
+          this.isLocationOn();
+          this.collectDevices();
+          this.tryAdvertising();
         }, (e) => {
           this.onError(e);
         });
@@ -77,25 +81,26 @@ export class HomePage {
   keepAdvertisingRunning(serviceParams: any) {
     console.log(serviceParams);
     if ((window.device.platform === 'Android')) {
-      console.log('android');
+      console.log('android running');
 
       this.bluetoothle.initialize().subscribe(r => {
         this.onResponse(r);
+        console.log('Initialized Peripheral: ', r);
       }, (e) => {
         this.onError(e);
       });
 
       this.bluetoothle.startAdvertising(serviceParams).then(r => {
-        console.log('advertising: ', r);
+        console.log('Bluetooth advertising started: ', r);
       }, (e) => {
         this.onError(e);
       });
     } else {
       console.log('ios running');
       this.bluetoothle.initializePeripheral().subscribe(r => {
-        console.log('started: ', r);
+        console.log('Initialized Peripheral: ', r);
         this.bluetoothle.startAdvertising(serviceParams).then(r => {
-          console.log('advertising: ', r);
+          console.log('Bluetooth advertising started: ', r);
         }, (e) => {
           this.onError(e);
         });
@@ -117,22 +122,31 @@ export class HomePage {
   isLocationOn() {
     window.ble.isLocationEnabled(this.onResponse,
       (e) => {
-        alert('Please enable location services');
-      }
-    );
+        if ((window.device.platform === 'Android')) {
+          this.locationAccuracy.request(this.locationAccuracy.REQUEST_PRIORITY_HIGH_ACCURACY).then(
+            () => console.log('Request successful'),
+            (error) => console.log('Error requesting location permissions', error)
+          );
+        }
+      });
   }
 
   collectDevices() {
+    console.log("Scan Started");
     this.ble.startScanWithOptions([], { reportDuplicates: true }).subscribe(r => {
       this.onDiscoverDevice(r);
+      console.log("Scan Completed");
     }, (e) => {
+      console.log("Scan Failed");
       this.onError(e);
       this.spinner = false;
       this.message = "Failed. Please wait as we are trying again.";
     });
 
     setTimeout(() => {
+      console.log("Spinner timeout started");
       if (this.spinner) {
+        console.log("Spinner timeout completed");
         this.spinner = false;
         this.message = 'Thanks for keeping distance';
       }
@@ -157,7 +171,6 @@ export class HomePage {
 
   onDiscoverDevice(device) {
     console.log(device);
-
     if (this.filterDevices(device)) return;
 
     const match = this.devices.find((e: any) => e.id === device.id);
@@ -172,7 +185,8 @@ export class HomePage {
     const power = -69;
     let distance = Math.pow(10, (power - device.rssi) / (10 * 2)).toFixed(2);
     this.spinner = false;
-    if (parseInt(distance) < 1) {
+    console.log("Device Distance:" + distance);
+    if (parseInt(distance) <= 1) {
       this.message = "Please keep distance";
     } else {
       this.message = "Thanks for keeping distance";
