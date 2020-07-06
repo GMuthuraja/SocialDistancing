@@ -20,10 +20,12 @@ export class HomePage {
   message: any;
   serviceId = 'ESTAFF';
   devices = [];
+  spinner: boolean = true;
+
 
   constructor(
     private ble: BLE,
-    private bluetoothle: BluetoothLE,) {
+    private bluetoothle: BluetoothLE) {
 
     setTimeout(() => {
       this.ble.startStateNotifications().subscribe(r => {
@@ -121,13 +123,20 @@ export class HomePage {
   }
 
   collectDevices() {
-    setInterval(() => {
-      this.ble.startScanWithOptions([], { reportDuplicates: true }).subscribe(r => {
-        this.onDiscoverDevice(r);
-      }, (e) => {
-        this.onError(e);
-      });
-    }, 2000);
+    this.ble.startScanWithOptions([], { reportDuplicates: true }).subscribe(r => {
+      this.onDiscoverDevice(r);
+    }, (e) => {
+      this.onError(e);
+      this.spinner = false;
+      this.message = "Failed. Please wait as we are trying again.";
+    });
+
+    setTimeout(() => {
+      if (this.spinner) {
+        this.spinner = false;
+        this.message = 'Thanks for keeping distance';
+      }
+    }, 10000);
   }
 
 
@@ -148,7 +157,6 @@ export class HomePage {
 
   onDiscoverDevice(device) {
     console.log(device);
-    console.log(this.filterDevices(device));
 
     if (this.filterDevices(device)) return;
 
@@ -163,7 +171,7 @@ export class HomePage {
   getDistance(device) {
     const power = -69;
     let distance = Math.pow(10, (power - device.rssi) / (10 * 2)).toFixed(2);
-    console.log(distance);
+    this.spinner = false;
     if (parseInt(distance) < 1) {
       this.message = "Please keep distance";
     } else {

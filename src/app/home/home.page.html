@@ -8,6 +8,7 @@
 
 <ion-content>
   <h2 class="ion-text-center">{{message}}</h2>
+  <ion-spinner name="crescent" *ngIf="spinner"></ion-spinner>
   <ion-list>
     <ion-card-content *ngFor="let device of devices">
       <p>{{device.name || 'Unnamed'}}</p>
